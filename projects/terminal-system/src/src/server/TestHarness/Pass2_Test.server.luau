@@ -10,6 +10,7 @@ local Players = game:GetService("Players")
 local Teams = game:GetService("Teams")
 local TerminalInteractionService = require(Services:WaitForChild("TerminalInteractionService"))
 local TerminalRegistry = require(Services:WaitForChild("TerminalRegistry"))
+local VISUAL_ONLY = true
 
 local function firstTerminal()
 	for key, state in pairs(TerminalRegistry.GetAll()) do
@@ -47,6 +48,9 @@ local function ensureTeams()
 end
 
 local function movePlayerTo(player: Player, position: Vector3)
+	if VISUAL_ONLY then
+		return
+	end
 	local character = player.Character
 	if not character then
 		return
