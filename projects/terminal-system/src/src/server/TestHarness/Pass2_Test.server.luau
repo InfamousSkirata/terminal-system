@@ -6,6 +6,9 @@ if not Config.Diagnostics.P2TestPrints then
 end
 
 local Services = script.Parent.Parent:WaitForChild("Services")
+local Players = game:GetService("Players")
+local Teams = game:GetService("Teams")
+local TerminalInteractionService = require(Services:WaitForChild("TerminalInteractionService"))
 local TerminalRegistry = require(Services:WaitForChild("TerminalRegistry"))
 
 local function firstTerminal()
@@ -28,28 +31,74 @@ local function forceCaptureWindow(terminalKey: string, state, durationSeconds: n
 	state.terminalPart:SetAttribute("CooldownEndTime", nil)
 end
 
+local function ensureTeams()
+	for _, name in ipairs(Config.Teams.Factions) do
+		if not Teams:FindFirstChild(name) then
+			local team = Instance.new("Team")
+			team.Name = name
+			team.Parent = Teams
+		end
+	end
+	if not Teams:FindFirstChild(Config.Teams.Civilian) then
+		local team = Instance.new("Team")
+		team.Name = Config.Teams.Civilian
+		team.Parent = Teams
+	end
+end
+
+local function movePlayerTo(player: Player, position: Vector3)
+	local character = player.Character
+	if not character then
+		return
+	end
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if root and root:IsA("BasePart") then
+		root.CFrame = CFrame.new(position)
+	end
+end
+
 task.delay(6, function()
+	ensureTeams()
+	local player = Players:GetPlayers()[1]
+	if not player then
+		return
+	end
+	player.Team = Teams:FindFirstChild("TGE")
+
 	local terminalKey, state = firstTerminal()
 	if not terminalKey or not state then
 		return
 	end
+
+	state.phase = "Idle"
+	state.cooldownEndTime = nil
+	state.terminalPart:SetAttribute("TerminalPhase", "Idle")
+	state.terminalPart:SetAttribute("CooldownEndTime", nil)
+	TerminalInteractionService.DebugTrigger(player, terminalKey)
 
 	TerminalRegistry.SetOwner(terminalKey, "Neutral")
 	TerminalRegistry.SetProgress(terminalKey, 60)
 	TerminalRegistry.SetNeutralProgressFaction(terminalKey, nil)
 	forceCaptureWindow(terminalKey, state, 6)
 
+	movePlayerTo(player, state.terminalPart.Position + Vector3.new(0, 3, 0))
+	task.delay(8, function()
+		movePlayerTo(player, state.terminalPart.Position + Vector3.new(0, 3, 500))
+	end)
+
 	task.delay(18, function()
 		TerminalRegistry.SetOwner(terminalKey, "THC")
 		TerminalRegistry.SetProgress(terminalKey, 60)
 		TerminalRegistry.SetNeutralProgressFaction(terminalKey, nil)
-		forceCaptureWindow(terminalKey, state, 30)
+		forceCaptureWindow(terminalKey, state, 12)
+		movePlayerTo(player, state.terminalPart.Position + Vector3.new(0, 3, 500))
 	end)
 
-	task.delay(26, function()
+	task.delay(30, function()
 		TerminalRegistry.SetOwner(terminalKey, "Neutral")
 		TerminalRegistry.SetProgress(terminalKey, 60)
 		TerminalRegistry.SetNeutralProgressFaction(terminalKey, nil)
-		forceCaptureWindow(terminalKey, state, 30)
+		forceCaptureWindow(terminalKey, state, 12)
+		movePlayerTo(player, state.terminalPart.Position + Vector3.new(0, 3, 500))
 	end)
 end)

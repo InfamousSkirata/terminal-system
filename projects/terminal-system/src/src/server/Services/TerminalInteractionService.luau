@@ -167,6 +167,13 @@ local function onPromptTriggered(player: Player, terminalKey: string)
 	emitStartSummary()
 end
 
+function TerminalInteractionService.DebugTrigger(player: Player, terminalKey: string)
+	if not Config.Diagnostics.P2TestPrints then
+		return
+	end
+	onPromptTriggered(player, terminalKey)
+end
+
 function TerminalInteractionService.Start()
 	clearConnections()
 	windowsStarted = 0
