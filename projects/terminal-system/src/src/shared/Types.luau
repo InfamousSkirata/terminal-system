@@ -1,7 +1,7 @@
 export type Faction = "TGE" | "TRA" | "THC"
 export type OwnerFaction = "Neutral" | Faction
 export type TerminalType = "Base" | "Field"
-export type TerminalPhase = "Idle" | "CaptureWindowActive"
+export type TerminalPhase = "Idle" | "CaptureWindowActive" | "Overtime" | "Cooldown"
 
 export type TerminalState = {
 	terminalId: string,
@@ -14,6 +14,12 @@ export type TerminalState = {
 	activeContender: Faction?,
 	neutralProgressFaction: Faction?,
 	terminalPart: BasePart,
+
+	captureWindowEndTime: number?,
+	captureWindowDurationSeconds: number?,
+	overtimeStartedAt: number?,
+	cooldownEndTime: number?,
+	lastStartUserId: number?,
 }
 
 return {}

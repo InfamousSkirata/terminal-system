@@ -6,6 +6,7 @@ local Types = require(ReplicatedStorage:WaitForChild("Types"))
 
 type OwnerFaction = Types.OwnerFaction
 type Faction = Types.Faction
+type TerminalPhase = Types.TerminalPhase
 type TerminalState = Types.TerminalState
 
 local TerminalRegistry = {}
@@ -19,7 +20,7 @@ local OWNER_COLORS: { [OwnerFaction]: Color3 } = {
 	THC = Color3.fromRGB(120, 160, 255),
 }
 
-local function terminalKey(planetId: string, terminalId: string): string
+function TerminalRegistry.BuildKey(planetId: string, terminalId: string): string
 	return string.format("%s.%s", planetId, terminalId)
 end
 
@@ -37,24 +38,31 @@ function TerminalRegistry.Init()
 		local initialOwner = terminal:GetAttribute("InitialOwner") :: OwnerFaction
 
 		local progress = if initialOwner == "Neutral" then 0 else 100
-		local key = terminalKey(planetId, terminalId)
+		local key = TerminalRegistry.BuildKey(planetId, terminalId)
 
 		stateByKey[key] = {
 			terminalId = terminalId,
 			planetId = planetId,
 			terminalType = terminalType,
 			ownerFaction = initialOwner,
-			phase = Config.Terminal.StartPhase,
+			phase = "Idle",
 			progress = progress,
 			zoneRadius = Config.Terminal.ZoneRadius,
 			activeContender = nil,
 			neutralProgressFaction = nil,
 			terminalPart = terminal,
+			captureWindowEndTime = nil,
+			captureWindowDurationSeconds = nil,
+			overtimeStartedAt = nil,
+			cooldownEndTime = nil,
+			lastStartUserId = nil,
 		}
 
 		terminal:SetAttribute("OwnerFaction", initialOwner)
-		terminal:SetAttribute("TerminalPhase", Config.Terminal.StartPhase)
+		terminal:SetAttribute("TerminalPhase", "Idle")
 		terminal:SetAttribute("TerminalProgress", progress)
+		terminal:SetAttribute("CaptureWindowEndTime", nil)
+		terminal:SetAttribute("CooldownEndTime", nil)
 		TerminalRegistry.ApplyOwnershipVisual(key)
 	end
 end
@@ -63,22 +71,12 @@ function TerminalRegistry.GetAll(): { [string]: TerminalState }
 	return stateByKey
 end
 
-function TerminalRegistry.GetById(terminalId: string): TerminalState?
-	if stateByKey[terminalId] then
-		return stateByKey[terminalId]
-	end
-
-	for _, state in pairs(stateByKey) do
-		if state.terminalId == terminalId then
-			return state
-		end
-	end
-
-	return nil
+function TerminalRegistry.GetByKey(terminalKey: string): TerminalState?
+	return stateByKey[terminalKey]
 end
 
-function TerminalRegistry.SetOwner(terminalId: string, newOwner: OwnerFaction)
-	local state = TerminalRegistry.GetById(terminalId)
+function TerminalRegistry.SetOwner(terminalKey: string, newOwner: OwnerFaction)
+	local state = TerminalRegistry.GetByKey(terminalKey)
 	if not state then
 		return
 	end
@@ -86,14 +84,15 @@ function TerminalRegistry.SetOwner(terminalId: string, newOwner: OwnerFaction)
 	state.ownerFaction = newOwner
 	if newOwner ~= "Neutral" then
 		state.neutralProgressFaction = nil
+		state.terminalPart:SetAttribute("NeutralProgressFaction", nil)
 	end
 
 	state.terminalPart:SetAttribute("OwnerFaction", newOwner)
-	TerminalRegistry.ApplyOwnershipVisual(terminalId)
+	TerminalRegistry.ApplyOwnershipVisual(terminalKey)
 end
 
-function TerminalRegistry.SetProgress(terminalId: string, progress: number)
-	local state = TerminalRegistry.GetById(terminalId)
+function TerminalRegistry.SetProgress(terminalKey: string, progress: number)
+	local state = TerminalRegistry.GetByKey(terminalKey)
 	if not state then
 		return
 	end
@@ -103,8 +102,8 @@ function TerminalRegistry.SetProgress(terminalId: string, progress: number)
 	state.terminalPart:SetAttribute("TerminalProgress", clamped)
 end
 
-function TerminalRegistry.SetActiveContender(terminalId: string, contender: Faction?)
-	local state = TerminalRegistry.GetById(terminalId)
+function TerminalRegistry.SetActiveContender(terminalKey: string, contender: Faction?)
+	local state = TerminalRegistry.GetByKey(terminalKey)
 	if not state then
 		return
 	end
@@ -113,8 +112,8 @@ function TerminalRegistry.SetActiveContender(terminalId: string, contender: Fact
 	state.terminalPart:SetAttribute("ActiveContender", contender)
 end
 
-function TerminalRegistry.SetNeutralProgressFaction(terminalId: string, faction: Faction?)
-	local state = TerminalRegistry.GetById(terminalId)
+function TerminalRegistry.SetNeutralProgressFaction(terminalKey: string, faction: Faction?)
+	local state = TerminalRegistry.GetByKey(terminalKey)
 	if not state then
 		return
 	end
@@ -123,8 +122,101 @@ function TerminalRegistry.SetNeutralProgressFaction(terminalId: string, faction:
 	state.terminalPart:SetAttribute("NeutralProgressFaction", faction)
 end
 
-function TerminalRegistry.ApplyOwnershipVisual(terminalId: string)
-	local state = TerminalRegistry.GetById(terminalId)
+function TerminalRegistry.SetPhase(terminalKey: string, phase: TerminalPhase)
+	local state = TerminalRegistry.GetByKey(terminalKey)
+	if not state then
+		return
+	end
+
+	state.phase = phase
+	state.terminalPart:SetAttribute("TerminalPhase", phase)
+end
+
+function TerminalRegistry.ClearWindowTiming(terminalKey: string)
+	local state = TerminalRegistry.GetByKey(terminalKey)
+	if not state then
+		return
+	end
+
+	state.captureWindowEndTime = nil
+	state.captureWindowDurationSeconds = nil
+	state.overtimeStartedAt = nil
+	state.lastStartUserId = nil
+	state.terminalPart:SetAttribute("CaptureWindowEndTime", nil)
+end
+
+function TerminalRegistry.TryStartCaptureWindow(terminalKey: string, durationSeconds: number, startedByUserId: number): boolean
+	local state = TerminalRegistry.GetByKey(terminalKey)
+	if not state then
+		return false
+	end
+
+	local nowTs = os.clock()
+	if state.phase ~= "Idle" then
+		return false
+	end
+	if TerminalRegistry.IsCooldownActive(terminalKey, nowTs) then
+		return false
+	end
+
+	state.phase = "CaptureWindowActive"
+	state.captureWindowDurationSeconds = durationSeconds
+	state.captureWindowEndTime = nowTs + durationSeconds
+	state.overtimeStartedAt = nil
+	state.lastStartUserId = startedByUserId
+	state.cooldownEndTime = nil
+
+	state.terminalPart:SetAttribute("TerminalPhase", state.phase)
+	state.terminalPart:SetAttribute("CaptureWindowEndTime", state.captureWindowEndTime)
+	state.terminalPart:SetAttribute("CooldownEndTime", nil)
+	return true
+end
+
+function TerminalRegistry.StartOvertime(terminalKey: string, startedAt: number)
+	local state = TerminalRegistry.GetByKey(terminalKey)
+	if not state then
+		return
+	end
+
+	state.phase = "Overtime"
+	state.overtimeStartedAt = startedAt
+	state.captureWindowEndTime = nil
+	state.captureWindowDurationSeconds = nil
+	state.terminalPart:SetAttribute("TerminalPhase", state.phase)
+	state.terminalPart:SetAttribute("CaptureWindowEndTime", nil)
+end
+
+function TerminalRegistry.StartCooldown(terminalKey: string, durationSeconds: number)
+	local state = TerminalRegistry.GetByKey(terminalKey)
+	if not state then
+		return
+	end
+
+	local nowTs = os.clock()
+	state.phase = "Cooldown"
+	state.cooldownEndTime = nowTs + durationSeconds
+	state.captureWindowEndTime = nil
+	state.captureWindowDurationSeconds = nil
+	state.overtimeStartedAt = nil
+	state.lastStartUserId = nil
+	state.activeContender = nil
+	state.terminalPart:SetAttribute("TerminalPhase", state.phase)
+	state.terminalPart:SetAttribute("CooldownEndTime", state.cooldownEndTime)
+	state.terminalPart:SetAttribute("CaptureWindowEndTime", nil)
+	state.terminalPart:SetAttribute("ActiveContender", nil)
+end
+
+function TerminalRegistry.IsCooldownActive(terminalKey: string, nowTs: number): boolean
+	local state = TerminalRegistry.GetByKey(terminalKey)
+	if not state or not state.cooldownEndTime then
+		return false
+	end
+
+	return nowTs < state.cooldownEndTime
+end
+
+function TerminalRegistry.ApplyOwnershipVisual(terminalKey: string)
+	local state = TerminalRegistry.GetByKey(terminalKey)
 	if not state then
 		return
 	end

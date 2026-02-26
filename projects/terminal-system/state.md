@@ -1,13 +1,13 @@
 # Project State
 
-**Stage:** Pass 2 Design
-**Status:** ready
+**Stage:** Pass 2 Build
+**Status:** testing-needed
 **Pipeline Version:** v3
 **Last Updated:** 2026-02-25
 
 ## Resume Notes
-Pass 1 wrap-up protocol completed.
-Next: design Pass 2 using build delta and current source-of-truth code.
+Pass 2 implementation completed in `src/src/server` and `src/src/shared`.
+Next: run MCP playtest checks for start gating, overtime/cooldown transitions, and regen/decay summaries; then proceed to Prove.
 
 ### Pass 1 Build Delta
 **Built as designed:**

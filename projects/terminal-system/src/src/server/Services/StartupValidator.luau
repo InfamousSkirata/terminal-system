@@ -1,4 +1,7 @@
 local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage:WaitForChild("Config"))
 
 local StartupValidator = {}
 
@@ -30,13 +33,56 @@ local function requireStringAttribute(instance: Instance, attributeName: string,
 	return nil
 end
 
-function StartupValidator.ValidateTerminals(): ValidationResult
+local function validateConfig(errors: { string })
+	if Config.Terminal.TickSeconds <= 0 then
+		table.insert(errors, "Config.Terminal.TickSeconds must be > 0")
+	end
+	if Config.Terminal.SpeedCapPlayers < 1 then
+		table.insert(errors, "Config.Terminal.SpeedCapPlayers must be >= 1")
+	end
+	if Config.Terminal.SpeedMinMultiplier <= 0 or Config.Terminal.SpeedMinMultiplier > 1 then
+		table.insert(errors, "Config.Terminal.SpeedMinMultiplier must be in (0,1]")
+	end
+
+	local positiveDurations = {
+		Config.Terminal.CaptureBaseSeconds,
+		Config.Terminal.NeutralizeBaseSeconds,
+		Config.Terminal.CaptureWindowSecondsLowPop,
+		Config.Terminal.CaptureWindowSecondsMidPop,
+		Config.Terminal.CaptureWindowSecondsHighPop,
+		Config.Terminal.CaptureWindowSecondsMaxPop,
+		Config.Terminal.OvertimeMaxSeconds,
+		Config.Terminal.CooldownSeconds,
+	}
+
+	for _, value in ipairs(positiveDurations) do
+		if value <= 0 then
+			table.insert(errors, "Capture/cooldown/overtime durations must be > 0")
+			break
+		end
+	end
+
+	if Config.Terminal.RegenDecayVirtualCount < 1 then
+		table.insert(errors, "RegenDecayVirtualCount must be >= 1")
+	end
+
+	if Config.Terminal.PromptHoldSeconds < 0 then
+		table.insert(errors, "PromptHoldSeconds must be >= 0")
+	end
+	if Config.Terminal.PromptMaxDistance <= 0 then
+		table.insert(errors, "PromptMaxDistance must be > 0")
+	end
+end
+
+function StartupValidator.ValidateTerminalsAndConfig(): ValidationResult
 	local errors = {}
 	local tagged = CollectionService:GetTagged("Terminal")
 
 	if #tagged == 0 then
 		table.insert(errors, "No terminals tagged 'Terminal' found.")
 	end
+
+	validateConfig(errors)
 
 	local seenKeys = {}
 
@@ -74,6 +120,10 @@ function StartupValidator.ValidateTerminals(): ValidationResult
 		errors = errors,
 		terminalCount = #tagged,
 	}
+end
+
+function StartupValidator.ValidateTerminals(): ValidationResult
+	return StartupValidator.ValidateTerminalsAndConfig()
 end
 
 return StartupValidator

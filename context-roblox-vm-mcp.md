@@ -1,5 +1,87 @@
 # Roblox + VM Setup Context
 
+## Aktueller Stand (Feb 26, 2026)
+Roblox Studio läuft auf dem Haupt-PC, Codex + robloxstudio-mcp laufen auf der VM.
+Der Studio-Plugin-Endpunkt nutzt Port `58741`.
+
+### Verbindung (täglich)
+1) Auf dem Haupt-PC den SSH-Tunnel starten und offen lassen:
+```bash
+ssh -N -L 58741:127.0.0.1:58741 tgc@10.0.2.15
+```
+2) Auf der VM den MCP-Server starten:
+```bash
+npx -y robloxstudio-mcp@latest
+```
+3) Verbindungscheck auf der VM:
+```bash
+curl -m 2 -sS -D - http://localhost:58741/ -o /dev/null
+```
+Erwartung: HTTP-Header (404 am Root ist ok).
+
+### Codex MCP Config (VM)
+```toml
+[mcp_servers.robloxstudio]
+command = "npx"
+args = ["-y", "robloxstudio-mcp@latest"]
+```
+
+## Daily Restart Checklist (Feb 26, 2026)
+Goal: MCP + Rojo both reachable from Studio on main PC.
+
+### 1) Main PC: SSH tunnel(s) to VM (keep running)
+MCP tunnel:
+```bash
+ssh -N -L 58741:127.0.0.1:58741 tgc@10.0.2.15
+```
+Rojo tunnel:
+```bash
+ssh -N -L 34872:127.0.0.1:34872 tgc@10.0.2.15
+```
+
+### 2) VM: start MCP server
+```bash
+npx -y robloxstudio-mcp@latest
+```
+Leave this terminal open.
+
+### 3) VM: start Rojo server
+```bash
+/home/tgc/.cargo/bin/rojo serve --address 0.0.0.0 --port 34872
+```
+Leave this terminal open.
+
+### 4) VM: verify MCP tunnel
+```bash
+curl -m 2 -sS -D - http://localhost:58741/ -o /dev/null
+```
+Expected: HTTP headers (404 at root is OK).
+
+### 5) Main PC: Studio plugin endpoints
+MCP plugin:
+```
+http://127.0.0.1:58741/mcp
+```
+Rojo plugin:
+```
+127.0.0.1:34872
+```
+
+### Notes
+- VM IP used: `10.0.2.15` (update if it changes).
+- Codex MCP config lives in `~/.codex/config.toml`.
+
+### Häufige Fehler (neu)
+- `ERR_INTERNAL_ASSERTION` oder `ERR_MODULE_NOT_FOUND` bei `npx`:
+  - Node 20 nutzen.
+  - `npx`-Cache leeren:
+```bash
+rm -rf ~/.npm/_npx
+npm cache clean --force
+```
+  - Dann `npx -y robloxstudio-mcp@latest` erneut starten.
+
+## Legacy Setup (Port 3000, VirtualBox NAT)
 ## Ziel
 Roblox Studio läuft auf dem Haupt-PC.
 Rojo + MCP laufen auf der VM.

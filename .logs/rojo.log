@@ -1,0 +1,13 @@
+Rojo server listening:
+  Address: 0.0.0.0
+  Port:    34872
+
+Visit http://0.0.0.0:34872/ in your browser for more information.
+[ERROR rojo] Rojo crashed! You are running Rojo 7.6.1.
+[ERROR rojo] This is probably a Rojo bug.
+[ERROR rojo] 
+[ERROR rojo] Please consider filing an issue: https://github.com/rojo-rbx/rojo/issues
+[ERROR rojo] 
+[ERROR rojo] Details: error binding to 0.0.0.0:34872: error creating server listener: Operation not permitted (os error 1)
+[ERROR rojo] in file /home/tgc/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hyper-0.14.32/src/server/server.rs on line 81
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace.

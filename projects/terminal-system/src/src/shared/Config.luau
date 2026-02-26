@@ -6,14 +6,26 @@ local Config = {
 		NeutralizeBaseSeconds = 156,
 		SpeedCapPlayers = 10,
 		SpeedMinMultiplier = 0.35,
-		StartPhase = "CaptureWindowActive", -- Pass 1 simplification; replaced in Pass 2.
+
+		CaptureWindowSecondsLowPop = 480,
+		CaptureWindowSecondsMidPop = 600,
+		CaptureWindowSecondsHighPop = 720,
+		CaptureWindowSecondsMaxPop = 840,
+
+		OvertimeMaxSeconds = 480,
+		CooldownSeconds = 1800,
+
+		RegenDecayVirtualCount = 1,
+		PromptHoldSeconds = 0.5,
+		PromptMaxDistance = 12,
 	},
 	Teams = {
 		Factions = { "TGE", "TRA", "THC" },
 		Civilian = "Civilian",
 	},
 	Diagnostics = {
-		Enabled = false,
+		P2TestPrints = true,
+		SummaryIntervalSeconds = 5,
 	},
 }
 
