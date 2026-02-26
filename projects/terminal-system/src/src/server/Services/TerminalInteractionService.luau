@@ -94,6 +94,12 @@ local function canPlayerStartWindow(player: Player, state: TerminalState): (bool
 end
 
 local function ensurePrompt(state: TerminalState): ProximityPrompt
+	for _, child in ipairs(state.terminalPart:GetChildren()) do
+		if child:IsA("ProximityPrompt") and child.Name ~= "TerminalInteractPrompt" then
+			child.Enabled = false
+		end
+	end
+
 	local existing = state.terminalPart:FindFirstChild("TerminalInteractPrompt")
 	if existing and existing:IsA("ProximityPrompt") then
 		return existing
