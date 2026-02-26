@@ -20,6 +20,16 @@ local OWNER_COLORS: { [OwnerFaction]: Color3 } = {
 	THC = Color3.fromRGB(120, 160, 255),
 }
 
+local function updatePromptEnabled(state: TerminalState)
+	local prompt = state.terminalPart:FindFirstChild("TerminalInteractPrompt")
+	if not prompt or not prompt:IsA("ProximityPrompt") then
+		return
+	end
+
+	local enabled = state.phase == "Idle" and (state.cooldownEndTime == nil or os.clock() >= state.cooldownEndTime)
+	prompt.Enabled = enabled
+end
+
 function TerminalRegistry.BuildKey(planetId: string, terminalId: string): string
 	return string.format("%s.%s", planetId, terminalId)
 end
@@ -64,6 +74,7 @@ function TerminalRegistry.Init()
 		terminal:SetAttribute("CaptureWindowEndTime", nil)
 		terminal:SetAttribute("CooldownEndTime", nil)
 		TerminalRegistry.ApplyOwnershipVisual(key)
+		updatePromptEnabled(stateByKey[key])
 	end
 end
 
@@ -130,6 +141,7 @@ function TerminalRegistry.SetPhase(terminalKey: string, phase: TerminalPhase)
 
 	state.phase = phase
 	state.terminalPart:SetAttribute("TerminalPhase", phase)
+	updatePromptEnabled(state)
 end
 
 function TerminalRegistry.ClearWindowTiming(terminalKey: string)
@@ -169,6 +181,7 @@ function TerminalRegistry.TryStartCaptureWindow(terminalKey: string, durationSec
 	state.terminalPart:SetAttribute("TerminalPhase", state.phase)
 	state.terminalPart:SetAttribute("CaptureWindowEndTime", state.captureWindowEndTime)
 	state.terminalPart:SetAttribute("CooldownEndTime", nil)
+	updatePromptEnabled(state)
 	return true
 end
 
@@ -184,6 +197,7 @@ function TerminalRegistry.StartOvertime(terminalKey: string, startedAt: number)
 	state.captureWindowDurationSeconds = nil
 	state.terminalPart:SetAttribute("TerminalPhase", state.phase)
 	state.terminalPart:SetAttribute("CaptureWindowEndTime", nil)
+	updatePromptEnabled(state)
 end
 
 function TerminalRegistry.StartCooldown(terminalKey: string, durationSeconds: number)
@@ -204,6 +218,7 @@ function TerminalRegistry.StartCooldown(terminalKey: string, durationSeconds: nu
 	state.terminalPart:SetAttribute("CooldownEndTime", state.cooldownEndTime)
 	state.terminalPart:SetAttribute("CaptureWindowEndTime", nil)
 	state.terminalPart:SetAttribute("ActiveContender", nil)
+	updatePromptEnabled(state)
 end
 
 function TerminalRegistry.IsCooldownActive(terminalKey: string, nowTs: number): boolean
