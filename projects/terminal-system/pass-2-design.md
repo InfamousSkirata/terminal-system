@@ -316,6 +316,10 @@ Re-run these golden tests from previous passes:
 ---
 
 ## Test Packet (Build Phase Contract)
+Temporary test harness used for automated playtest:
+- `src/src/server/TestHarness/Pass2_Test.server.luau`
+- Enabled only when `Config.Diagnostics.P2TestPrints = true`.
+- Seeds a single terminal into short capture windows and mid-progress states so overtime/regen/decay can be observed without long waits.
 
 ### Build Step 1: Interaction Start + Duration Selection
 AI build prints (temporary):
