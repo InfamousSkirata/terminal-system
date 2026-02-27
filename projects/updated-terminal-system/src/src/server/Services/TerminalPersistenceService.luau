@@ -182,14 +182,14 @@ function TerminalPersistenceService.BindToClose(states: { [string]: Types.Termin
 end
 
 function TerminalPersistenceService.__debug_adjust_saved_at(key: string, secondsAgo: number)
-\tif not (Config.Persistence.UseMockInStudio and RunService:IsStudio()) then
-\t\treturn
-\tend
-\tlocal record = mockStore[key]
-\tif not record then
-\t\treturn
-\tend
-\trecord.savedAt = os.time() - secondsAgo
+	if not (Config.Persistence.UseMockInStudio and RunService:IsStudio()) then
+		return
+	end
+	local record = mockStore[key]
+	if not record then
+		return
+	end
+	record.savedAt = os.time() - secondsAgo
 end
 
 return TerminalPersistenceService
