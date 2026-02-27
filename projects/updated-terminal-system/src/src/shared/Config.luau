@@ -27,7 +27,7 @@ local Config = {
 		Pass2TestPrints = true,
 		SummaryIntervalSeconds = 5,
 		Pass1HarnessEnabled = false,
-		Pass2HarnessEnabled = false,
+		Pass2HarnessEnabled = true,
 		UseForcedTeamCounts = false,
 	},
 }
