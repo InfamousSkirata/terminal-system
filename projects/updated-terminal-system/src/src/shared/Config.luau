@@ -42,7 +42,7 @@ local Config = {
 		Pass1HarnessEnabled = false,
 		Pass2HarnessEnabled = false,
 		Pass2HarnessOverrideDurations = false,
-		Pass3HarnessEnabled = false,
+		Pass3HarnessEnabled = true,
 		UseForcedTeamCounts = false,
 	},
 	Persistence = {
