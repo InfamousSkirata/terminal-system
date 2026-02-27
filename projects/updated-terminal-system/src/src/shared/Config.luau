@@ -39,7 +39,7 @@ local Config = {
 		Pass1TestPrints = false,
 		Pass2TestPrints = false,
 		SummaryIntervalSeconds = 5,
-		Pass1HarnessEnabled = false,
+		Pass1HarnessEnabled = true,
 		Pass2HarnessEnabled = false,
 		Pass2HarnessOverrideDurations = false,
 		Pass3HarnessEnabled = false,
@@ -48,9 +48,10 @@ local Config = {
 	Persistence = {
 		Enabled = true,
 		DataStoreName = "TerminalState",
-		UseMockInStudio = true,
+		UseMockInStudio = false,
 		SaveProgress = true,
 		SaveCooldownRemaining = true,
+		Debug = false,
 	},
 }
 

@@ -8,6 +8,8 @@ local Types = require(ReplicatedStorage:WaitForChild("Types"))
 
 local TerminalPersistenceService = {}
 
+end
+
 export type LoadMap = { [string]: Types.TerminalPersistLoad }
 
 local dataStore: GlobalDataStore? = nil
@@ -55,7 +57,7 @@ end
 
 function TerminalPersistenceService.Init()
 	dataStore = nil
-end
+	end
 
 local function loadRecord(key: string): Types.TerminalPersistRecord?
 	if Config.Persistence.UseMockInStudio and RunService:IsStudio() then
@@ -71,9 +73,11 @@ local function loadRecord(key: string): Types.TerminalPersistRecord?
 		return store:GetAsync(key)
 	end)
 	if not ok then
-		return nil
+				return nil
 	end
 
+	if result ~= nil then
+			end
 	return result
 end
 
@@ -83,7 +87,12 @@ function TerminalPersistenceService.LoadAll(): LoadMap
 		return overrides
 	end
 
-	for key, info in pairs(getTerminalKeys()) do
+	local keys = getTerminalKeys()
+	local count = 0
+	for _ in pairs(keys) do
+		count += 1
+	end
+		for key, info in pairs(keys) do
 		local record = loadRecord(key)
 		if record == nil then
 			continue
@@ -136,7 +145,7 @@ function TerminalPersistenceService.SaveTerminal(state: Types.TerminalState, rea
 	if not Config.Persistence.Enabled then
 		return
 	end
-
+	
 	local record: Types.TerminalPersistRecord = {
 		ownerFaction = state.ownerFaction,
 		terminalType = state.terminalType,
@@ -155,9 +164,12 @@ function TerminalPersistenceService.SaveTerminal(state: Types.TerminalState, rea
 		return
 	end
 
-	pcall(function()
+	local ok, err = pcall(function()
 		store:SetAsync(state.key, record)
 	end)
+	if ok then
+			else
+			end
 end
 
 function TerminalPersistenceService.SaveAll(states: { [string]: Types.TerminalState })
