@@ -9,6 +9,9 @@ local Diagnostics = require(script.Parent:WaitForChild("Diagnostics"))
 local TerminalRegistry = require(script.Parent:WaitForChild("TerminalRegistry"))
 local TerminalAudioService = require(script.Parent:WaitForChild("TerminalAudioService"))
 local TerminalPersistenceService = require(script.Parent:WaitForChild("TerminalPersistenceService"))
+local TerminalEventsService = require(script.Parent:WaitForChild("TerminalEventsService"))
+local TerminalSpawnService = require(script.Parent:WaitForChild("TerminalSpawnService"))
+local TerminalWageService = require(script.Parent:WaitForChild("TerminalWageService"))
 
 type Faction = Types.Faction
 type TerminalState = Types.TerminalState
@@ -25,9 +28,20 @@ local running = false
 local heartbeatConnection: RBXScriptConnection? = nil
 local elapsed = 0
 local summaryElapsed = 0
+local lastProgressEmit: { [string]: number } = {}
 
 local function nowSeconds(): number
 	return os.clock()
+end
+
+local function emitProgress(state: TerminalState)
+	local nowTs = nowSeconds()
+	local last = lastProgressEmit[state.key] or 0
+	if nowTs - last < 1 then
+		return
+	end
+	lastProgressEmit[state.key] = nowTs
+	TerminalEventsService.Emit("ProgressUpdated", TerminalRegistry.BuildEventPayload(state))
 end
 
 local function isEligible(player: Player): boolean
@@ -175,6 +189,10 @@ local function beginCaptureWindow(key: string, state: TerminalState, durationSec
 	TerminalRegistry.SetOvertimeStart(key, nil)
 	TerminalRegistry.SetCooldownEnd(key, nil)
 	TerminalRegistry.SetActiveContender(key, nil)
+	local updated = TerminalRegistry.GetByKey(key) or state
+	local payload = TerminalRegistry.BuildEventPayload(updated)
+	payload.durationSeconds = durationSeconds
+	TerminalEventsService.Emit("CaptureWindowStarted", payload)
 	TerminalAudioService.OnCaptureStart(state)
 end
 
@@ -182,16 +200,27 @@ local function beginOvertime(key: string, state: TerminalState)
 	local nowTs = nowSeconds()
 	TerminalRegistry.SetPhase(key, "Overtime")
 	TerminalRegistry.SetOvertimeStart(key, nowTs)
+	local updated = TerminalRegistry.GetByKey(key) or state
+	TerminalEventsService.Emit("OvertimeStarted", TerminalRegistry.BuildEventPayload(updated))
 	TerminalAudioService.OnOvertime(state)
 end
 
 local function beginCooldown(key: string, state: TerminalState, reason: string)
 	local nowTs = nowSeconds()
+	local priorPhase = state.phase
 	TerminalRegistry.SetPhase(key, "Cooldown")
 	TerminalRegistry.SetCaptureWindow(key, nil, nil)
 	TerminalRegistry.SetOvertimeStart(key, nil)
 	TerminalRegistry.SetCooldownEnd(key, nowTs + Config.Terminal.CooldownSeconds)
 	TerminalRegistry.SetActiveContender(key, nil)
+	local updated = TerminalRegistry.GetByKey(key) or state
+	local payload = TerminalRegistry.BuildEventPayload(updated)
+	payload.reason = reason
+	payload.cooldownSeconds = Config.Terminal.CooldownSeconds
+	TerminalEventsService.Emit("CooldownStarted", payload)
+	if priorPhase == "Overtime" then
+		TerminalEventsService.Emit("OvertimeEnded", TerminalRegistry.BuildEventPayload(updated))
+	end
 	TerminalAudioService.OnCooldown(state, reason)
 	TerminalPersistenceService.SaveTerminal(state, "cooldown_start")
 end
@@ -223,6 +252,14 @@ local function advanceOwned(key: string, state: TerminalState, contender: Factio
 	local oldOwner = state.ownerFaction
 	TerminalRegistry.SetProgress(key, 0)
 	TerminalRegistry.SetOwner(key, "Neutral")
+	TerminalEventsService.Emit("BecameNeutral", TerminalRegistry.BuildEventPayload(state))
+	local updated = TerminalRegistry.GetByKey(key) or state
+	local payload = TerminalRegistry.BuildEventPayload(updated)
+	payload.oldOwner = oldOwner
+	payload.newOwner = "Neutral"
+	TerminalEventsService.Emit("OwnershipChanged", payload)
+	TerminalSpawnService.OnBecameNeutral(state, oldOwner)
+	TerminalWageService.OnBecameNeutral(state, oldOwner, TerminalRegistry.GetAll())
 	TerminalPersistenceService.SaveTerminal(state, "owner_neutralized")
 	Diagnostics.Increment("neutralizations", 1)
 	Diagnostics.Log("transition", {
@@ -253,6 +290,13 @@ local function advanceNeutral(key: string, state: TerminalState, contender: Fact
 
 	TerminalRegistry.SetProgress(key, 100)
 	TerminalRegistry.SetOwner(key, contender)
+	local updated = TerminalRegistry.GetByKey(key) or state
+	local payload = TerminalRegistry.BuildEventPayload(updated)
+	payload.oldOwner = "Neutral"
+	payload.newOwner = contender
+	TerminalEventsService.Emit("OwnershipChanged", payload)
+	TerminalSpawnService.OnOwnershipChanged(state, "Neutral", contender)
+	TerminalWageService.OnOwnershipChanged(state, "Neutral", contender, TerminalRegistry.GetAll())
 	TerminalPersistenceService.SaveTerminal(state, "owner_captured")
 	Diagnostics.Increment("captures", 1)
 	Diagnostics.Log("transition", {

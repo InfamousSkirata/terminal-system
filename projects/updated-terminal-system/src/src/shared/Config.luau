@@ -27,6 +27,8 @@ local Config = {
 		LoopMinDistance = 8,
 		LoopMaxDistance = 30,
 		SpeedCapPlayers = 10,
+		WageBonusPerTerminal = 0.01,
+		WageBonusCap = 0.10,
 		SpeedMinMultiplier = 0.35,
 		RegenDecayVirtualCount = 1,
 		StartPhase = "Idle",
@@ -43,6 +45,8 @@ local Config = {
 		Pass2HarnessEnabled = false,
 		Pass2HarnessOverrideDurations = false,
 		Pass3HarnessEnabled = false,
+		Pass4TestPrints = false,
+		Pass4HarnessEnabled = false,
 		UseForcedTeamCounts = false,
 	},
 	Persistence = {

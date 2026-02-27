@@ -99,6 +99,20 @@ function TerminalRegistry.GetByKey(key: string): TerminalState?
 	return stateByKey[key]
 end
 
+
+function TerminalRegistry.BuildEventPayload(state: Types.TerminalState): Types.TerminalEventPayload
+	return {
+		key = state.key,
+		terminalId = state.terminalId,
+		planetId = state.planetId,
+		terminalType = state.terminalType,
+		ownerFaction = state.ownerFaction,
+		phase = state.phase,
+		progress = state.progress,
+		activeContender = state.activeContender,
+	}
+end
+
 function TerminalRegistry.SetOwner(key: string, newOwner: OwnerFaction)
 	local state = stateByKey[key]
 	if not state then

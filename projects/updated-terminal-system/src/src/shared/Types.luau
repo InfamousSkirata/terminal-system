@@ -35,4 +35,31 @@ export type TerminalPersistLoad = {
 	cooldownRemainingSeconds: number?,
 }
 
+export type TerminalEventPayload = {
+	key: string,
+	terminalId: string,
+	planetId: string,
+	terminalType: TerminalType,
+	ownerFaction: OwnerFaction,
+	phase: TerminalPhase,
+	progress: number,
+	activeContender: Faction?,
+}
+
+export type OwnershipChangedPayload = TerminalEventPayload & {
+	oldOwner: OwnerFaction,
+	newOwner: OwnerFaction,
+}
+
+export type ProgressUpdatedPayload = TerminalEventPayload & {
+	progress: number,
+	activeContender: Faction?,
+}
+
+export type WageBonusPayload = {
+	faction: Faction,
+	ownedTerminals: number,
+	bonusPercent: number,
+}
+
 return {}
