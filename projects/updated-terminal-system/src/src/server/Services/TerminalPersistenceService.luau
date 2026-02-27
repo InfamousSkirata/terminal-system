@@ -8,8 +8,6 @@ local Types = require(ReplicatedStorage:WaitForChild("Types"))
 
 local TerminalPersistenceService = {}
 
-end
-
 export type LoadMap = { [string]: Types.TerminalPersistLoad }
 
 local dataStore: GlobalDataStore? = nil
