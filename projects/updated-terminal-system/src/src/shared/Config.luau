@@ -2,8 +2,8 @@ local Config = {
 	Terminal = {
 		ZoneRadius = 40,
 		TickSeconds = 0.5,
-		CaptureBaseSeconds = 120,
-		NeutralizeBaseSeconds = 156,
+		CaptureBaseSeconds = 2,
+		NeutralizeBaseSeconds = 2,
 		CaptureWindowSecondsByPopulation = {
 			{ maxPlayers = 20, seconds = 8 * 60 },
 			{ maxPlayers = 39, seconds = 10 * 60 },
@@ -11,7 +11,7 @@ local Config = {
 			{ maxPlayers = 999, seconds = 14 * 60 },
 		},
 		OvertimeCapSeconds = 8 * 60,
-		CooldownSeconds = 30 * 60,
+		CooldownSeconds = 5,
 		InteractionDistance = 12,
 		InteractionHoldSeconds = 2,
 		InteractionHoldSoundId = "",

@@ -1,7 +1,7 @@
 # Project State
 
-**Stage:** Pass 2 Complete
-**Status:** pass-2-complete
+**Stage:** Pass 4 Complete
+**Status:** pass-4-complete
 **Pipeline Version:** v3
 **Last Updated:** 2026-02-27
 
@@ -25,12 +25,11 @@ Observed proof outputs from harness run:
 - `[P1_HARNESS] pass=1 neutralized=1 captured=1 tie_drift=0.00 tie_ok=1 neutralizations=1 captures=1 tie_freeze_ok=1 errors=0`
 
 Next step:
-- Move to Pass 2 implementation (window start gating, duration buckets, overtime, cooldown).
+- Pass 3 design ready; build persistence + restart semantics.
 
 Runtime defaults:
 - `Pass1HarnessEnabled=false`
 - `UseForcedTeamCounts=false`
-- Pass 1 harness remains available for re-validation when needed.
 
 Pass 2 implementation completed in source + Studio:
 - `TerminalInteractionService` added (ProximityPrompt start gate).
@@ -41,6 +40,7 @@ Pass 2 implementation completed in source + Studio:
   - cooldown lockout and return to idle.
 - `TerminalRegistry` expanded with phase timing fields and setters.
 - `Config` updated with Pass 2 timing and interaction tunables.
+- Terminal audio lifecycle added (idle/capture loops + capture start/success/fail one-shots).
 
 Smoke check:
 - Playtest booted with `[P1_SUMMARY] step=bootstrap valid=1 terminals=2 errors=0`
@@ -62,3 +62,21 @@ Smoke check:
 
 **Non-blocking follow-ups:**
 - Add startup validation for `InteractionHoldSeconds` and audio config values.
+
+
+### Pass 4 Build Delta
+**Built as designed:**
+- Event surface via TerminalEventsService (BindableEvents).
+- Spawn eligibility tracking (field terminals only) and wage bonus recompute.
+- Event emission on capture window/overtime/cooldown/ownership/progress changes.
+
+**Deviations from design:**
+- ProgressUpdated throttled at 1s per terminal (implemented inline in capture service).
+
+**New runtime contracts:**
+- ReplicatedStorage.TerminalEvents folder with BindableEvents.
+- Spawn options change payload includes `faction`, `planetId`, `terminals`.
+- Wage bonus payload includes `faction`, `ownedTerminals`, `bonusPercent`.
+
+**Non-blocking follow-ups:**
+- Consider gating ProgressUpdated by active window only (currently emits during active window/overtime).

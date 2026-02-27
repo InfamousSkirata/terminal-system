@@ -62,9 +62,6 @@ function TerminalEventsService.Emit(eventName: string, payload: any)
 	if not ev then
 		return
 	end
-	if Config.Diagnostics.Pass4TestPrints then
-		print(string.format("[P4_TEST] event=%s", eventName))
-	end
 	ev:Fire(payload)
 end
 
