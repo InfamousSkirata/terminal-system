@@ -20,4 +20,19 @@ export type TerminalState = {
 	terminalPart: BasePart,
 }
 
+export type TerminalPersistRecord = {
+	ownerFaction: OwnerFaction,
+	terminalType: TerminalType,
+	progress: number?,
+	cooldownRemainingSeconds: number?,
+	savedAt: number,
+}
+
+export type TerminalPersistLoad = {
+	ownerFaction: OwnerFaction,
+	progress: number?,
+	phase: TerminalPhase,
+	cooldownRemainingSeconds: number?,
+}
+
 return {}

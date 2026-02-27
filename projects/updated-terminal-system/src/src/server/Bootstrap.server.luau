@@ -5,6 +5,7 @@ local Config = require(ReplicatedStorage:WaitForChild("Config"))
 
 local StartupValidator = require(Services:WaitForChild("StartupValidator"))
 local TerminalRegistry = require(Services:WaitForChild("TerminalRegistry"))
+local TerminalPersistenceService = require(Services:WaitForChild("TerminalPersistenceService"))
 local TerminalAudioService = require(Services:WaitForChild("TerminalAudioService"))
 local TerminalCaptureService = require(Services:WaitForChild("TerminalCaptureService"))
 local TerminalInteractionService = require(Services:WaitForChild("TerminalInteractionService"))
@@ -18,7 +19,10 @@ if not validation.ok then
 	return
 end
 
-TerminalRegistry.Init()
+TerminalPersistenceService.Init()
+local overrides = TerminalPersistenceService.LoadAll()
+TerminalRegistry.Init(overrides)
 TerminalAudioService.Init(TerminalRegistry.GetAll())
 TerminalCaptureService.Start()
 TerminalInteractionService.Start()
+TerminalPersistenceService.BindToClose(TerminalRegistry.GetAll())

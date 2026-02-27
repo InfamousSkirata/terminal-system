@@ -42,7 +42,15 @@ local Config = {
 		Pass1HarnessEnabled = false,
 		Pass2HarnessEnabled = false,
 		Pass2HarnessOverrideDurations = false,
+		Pass3HarnessEnabled = false,
 		UseForcedTeamCounts = false,
+	},
+	Persistence = {
+		Enabled = true,
+		DataStoreName = "TerminalState",
+		UseMockInStudio = true,
+		SaveProgress = true,
+		SaveCooldownRemaining = true,
 	},
 }
 

@@ -8,6 +8,7 @@ local Types = require(ReplicatedStorage:WaitForChild("Types"))
 local Diagnostics = require(script.Parent:WaitForChild("Diagnostics"))
 local TerminalRegistry = require(script.Parent:WaitForChild("TerminalRegistry"))
 local TerminalAudioService = require(script.Parent:WaitForChild("TerminalAudioService"))
+local TerminalPersistenceService = require(script.Parent:WaitForChild("TerminalPersistenceService"))
 
 type Faction = Types.Faction
 type TerminalState = Types.TerminalState
@@ -192,6 +193,7 @@ local function beginCooldown(key: string, state: TerminalState, reason: string)
 	TerminalRegistry.SetCooldownEnd(key, nowTs + Config.Terminal.CooldownSeconds)
 	TerminalRegistry.SetActiveContender(key, nil)
 	TerminalAudioService.OnCooldown(state, reason)
+	TerminalPersistenceService.SaveTerminal(state, "cooldown_start")
 end
 
 local function advanceOwned(key: string, state: TerminalState, contender: Faction?, leaderCount: number, totalCount: number, tickSeconds: number)
@@ -221,6 +223,7 @@ local function advanceOwned(key: string, state: TerminalState, contender: Factio
 	local oldOwner = state.ownerFaction
 	TerminalRegistry.SetProgress(key, 0)
 	TerminalRegistry.SetOwner(key, "Neutral")
+	TerminalPersistenceService.SaveTerminal(state, "owner_neutralized")
 	Diagnostics.Increment("neutralizations", 1)
 	Diagnostics.Log("transition", {
 		key = state.key,
@@ -250,6 +253,7 @@ local function advanceNeutral(key: string, state: TerminalState, contender: Fact
 
 	TerminalRegistry.SetProgress(key, 100)
 	TerminalRegistry.SetOwner(key, contender)
+	TerminalPersistenceService.SaveTerminal(state, "owner_captured")
 	Diagnostics.Increment("captures", 1)
 	Diagnostics.Log("transition", {
 		key = state.key,
@@ -372,6 +376,7 @@ function TerminalCaptureService.Start()
 				local cooldownEndTime = state.cooldownEndTime
 				if cooldownEndTime and nowSeconds() >= cooldownEndTime then
 					setPhaseIdle(key)
+					TerminalPersistenceService.SaveTerminal(state, "cooldown_end")
 				end
 				continue
 			end

@@ -64,6 +64,9 @@ local function validateConfig(errors: { string })
 	if Config.Terminal.InteractionDistance <= 0 then
 		table.insert(errors, "Config.Terminal.InteractionDistance must be > 0")
 	end
+	if Config.Terminal.InteractionHoldSeconds <= 0 then
+		table.insert(errors, "Config.Terminal.InteractionHoldSeconds must be > 0")
+	end
 	local bands = Config.Terminal.CaptureWindowSecondsByPopulation
 	if typeof(bands) ~= "table" or #bands == 0 then
 		table.insert(errors, "Config.Terminal.CaptureWindowSecondsByPopulation must be non-empty")
@@ -75,6 +78,17 @@ local function validateConfig(errors: { string })
 				table.insert(errors, string.format("CaptureWindowSecondsByPopulation[%d].seconds must be > 0", i))
 			end
 		end
+	if Config.Persistence.Enabled then
+		if typeof(Config.Persistence.DataStoreName) ~= "string" or Config.Persistence.DataStoreName == "" then
+			table.insert(errors, "Config.Persistence.DataStoreName must be non-empty when persistence is enabled")
+		end
+		if Config.Persistence.SaveCooldownRemaining ~= true and Config.Persistence.SaveCooldownRemaining ~= false then
+			table.insert(errors, "Config.Persistence.SaveCooldownRemaining must be boolean")
+		end
+		if Config.Persistence.SaveProgress ~= true and Config.Persistence.SaveProgress ~= false then
+			table.insert(errors, "Config.Persistence.SaveProgress must be boolean")
+		end
+	end
 	end
 end
 

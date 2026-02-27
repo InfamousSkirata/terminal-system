@@ -23,7 +23,7 @@ function TerminalRegistry.BuildKey(planetId: string, terminalId: string): string
 	return string.format("%s.%s", planetId, terminalId)
 end
 
-function TerminalRegistry.Init()
+function TerminalRegistry.Init(overrides: { [string]: Types.TerminalPersistLoad }?)
 	table.clear(stateByKey)
 
 	for _, terminal in ipairs(CollectionService:GetTagged("Terminal")) do
@@ -38,6 +38,29 @@ function TerminalRegistry.Init()
 
 		local progress = if initialOwner == "Neutral" then 0 else 100
 		local key = TerminalRegistry.BuildKey(planetId, terminalId)
+		local override = if overrides then overrides[key] else nil
+
+		if override then
+			if override.ownerFaction then
+				initialOwner = override.ownerFaction
+			end
+			if typeof(override.progress) == "number" then
+				progress = math.clamp(override.progress, 0, 100)
+			elseif initialOwner == "Neutral" then
+				progress = 0
+			else
+				progress = 100
+			end
+		end
+
+		local phase = Config.Terminal.StartPhase
+		local cooldownEndTime: number? = nil
+		if override then
+			phase = override.phase
+			if phase == "Cooldown" and typeof(override.cooldownRemainingSeconds) == "number" then
+				cooldownEndTime = os.clock() + math.max(0, override.cooldownRemainingSeconds)
+			end
+		end
 
 		stateByKey[key] = {
 			key = key,
@@ -45,25 +68,25 @@ function TerminalRegistry.Init()
 			planetId = planetId,
 			terminalType = terminalType,
 			ownerFaction = initialOwner,
-			phase = Config.Terminal.StartPhase,
+			phase = phase,
 			progress = progress,
 			zoneRadius = Config.Terminal.ZoneRadius,
 			activeContender = nil,
 			captureWindowDurationSeconds = nil,
 			captureWindowEndTime = nil,
 			overtimeStartedAt = nil,
-			cooldownEndTime = nil,
+			cooldownEndTime = cooldownEndTime,
 			terminalPart = terminal,
 		}
 
 		terminal:SetAttribute("OwnerFaction", initialOwner)
-		terminal:SetAttribute("TerminalPhase", Config.Terminal.StartPhase)
+		terminal:SetAttribute("TerminalPhase", phase)
 		terminal:SetAttribute("TerminalProgress", progress)
 		terminal:SetAttribute("ActiveContender", nil)
 		terminal:SetAttribute("CaptureWindowDurationSeconds", nil)
 		terminal:SetAttribute("CaptureWindowEndTime", nil)
 		terminal:SetAttribute("OvertimeStartedAt", nil)
-		terminal:SetAttribute("CooldownEndTime", nil)
+		terminal:SetAttribute("CooldownEndTime", cooldownEndTime)
 		TerminalRegistry.ApplyOwnershipVisual(key)
 	end
 end
