@@ -420,6 +420,7 @@ function TerminalCaptureService.Start()
 				local cooldownEndTime = state.cooldownEndTime
 				if cooldownEndTime and nowSeconds() >= cooldownEndTime then
 					setPhaseIdle(key)
+					TerminalEventsService.Emit("CooldownEnded", TerminalRegistry.BuildEventPayload(state))
 					TerminalPersistenceService.SaveTerminal(state, "cooldown_end")
 				end
 				continue
