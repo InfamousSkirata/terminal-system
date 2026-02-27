@@ -45,8 +45,8 @@ local Config = {
 		Pass2HarnessEnabled = false,
 		Pass2HarnessOverrideDurations = false,
 		Pass3HarnessEnabled = false,
-		Pass4TestPrints = true,
-		Pass4HarnessEnabled = true,
+		Pass4TestPrints = false,
+		Pass4HarnessEnabled = false,
 		UseForcedTeamCounts = false,
 	},
 	Persistence = {
