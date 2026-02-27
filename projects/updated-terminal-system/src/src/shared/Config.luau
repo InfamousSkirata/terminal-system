@@ -13,6 +13,9 @@ local Config = {
 		OvertimeCapSeconds = 8 * 60,
 		CooldownSeconds = 30 * 60,
 		InteractionDistance = 12,
+		InteractionHoldSeconds = 2,
+		InteractionHoldSoundId = "",
+		InteractionHoldSoundVolume = 0.5,
 		SpeedCapPlayers = 10,
 		SpeedMinMultiplier = 0.35,
 		RegenDecayVirtualCount = 1,
@@ -28,6 +31,7 @@ local Config = {
 		SummaryIntervalSeconds = 5,
 		Pass1HarnessEnabled = false,
 		Pass2HarnessEnabled = true,
+		Pass2HarnessOverrideDurations = false,
 		UseForcedTeamCounts = false,
 	},
 }

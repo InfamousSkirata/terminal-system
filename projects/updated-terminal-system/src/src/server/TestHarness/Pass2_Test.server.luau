@@ -66,17 +66,19 @@ task.delay(4, function()
 		return
 	end
 
-	local teamFaction = ensureTeam("TGE")
-	local teamCivilian = ensureTeam(Config.Teams.Civilian)
+local teamFaction = ensureTeam("TGE")
+local teamCivilian = ensureTeam(Config.Teams.Civilian)
 
-	local originalBands = Config.Terminal.CaptureWindowSecondsByPopulation
-	local originalOvertimeCap = Config.Terminal.OvertimeCapSeconds
-	local originalCooldown = Config.Terminal.CooldownSeconds
+local originalBands = Config.Terminal.CaptureWindowSecondsByPopulation
+local originalOvertimeCap = Config.Terminal.OvertimeCapSeconds
+local originalCooldown = Config.Terminal.CooldownSeconds
 
+if Config.Diagnostics.Pass2HarnessOverrideDurations then
 	Config.Terminal.CaptureWindowSecondsByPopulation = { { maxPlayers = 999, seconds = 3 } }
 	Config.Terminal.OvertimeCapSeconds = 4
 	Config.Terminal.CooldownSeconds = 3
-	Config.Diagnostics.UseForcedTeamCounts = true
+end
+Config.Diagnostics.UseForcedTeamCounts = true
 
 	player.Team = teamCivilian
 	local okIneligible, reasonIneligible = TerminalCaptureService.TryStartCapture(player, terminalKey)
